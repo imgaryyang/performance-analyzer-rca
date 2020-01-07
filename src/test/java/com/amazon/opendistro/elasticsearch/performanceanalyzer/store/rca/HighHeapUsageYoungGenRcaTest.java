@@ -2,7 +2,7 @@ package com.amazon.opendistro.elasticsearch.performanceanalyzer.store.rca;
 
 import com.amazon.opendistro.elasticsearch.performanceanalyzer.rca.framework.api.flow_units.ResourceFlowUnit;
 import com.amazon.opendistro.elasticsearch.performanceanalyzer.rca.framework.api.metrics.MetricTestHelper;
-import com.amazon.opendistro.elasticsearch.performanceanalyzer.rca.store.rca.HighHeapYoungGenRca;
+import com.amazon.opendistro.elasticsearch.performanceanalyzer.rca.store.rca.HighHeapUsageYoungGenRca;
 
 import java.util.Arrays;
 import java.util.List;
@@ -20,21 +20,21 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({HighHeapYoungGenRca.class})
+@PrepareForTest({HighHeapUsageYoungGenRca.class})
 @PowerMockIgnore({"com.sun.org.apache.xerces.*", "javax.xml.*", "org.xml.*", "org.w3c.*", "com.sun.org.apache.xalan.*"})
-public class HighHeapYoungGenRcaTest {
+public class HighHeapUsageYoungGenRcaTest {
   private static final double CONVERT_BYTES_TO_MEGABYTES = Math.pow(1024, 2);
   private static final int RCA_PERIOD = 12;
   private MetricTestHelper heap_Used;
   private MetricTestHelper gc_Collection_Time;
-  private HighHeapYoungGenRca youngGenRca;
+  private HighHeapUsageYoungGenRca youngGenRca;
   private List<String> columnName;
 
   private void mockFlowUnits(int timeStampInSecond, double heapUsageVal, double gcCollectionTimeVal) {
     Mockito.when(System.currentTimeMillis()).thenReturn(TimeUnit.SECONDS.toMillis(timeStampInSecond));
     //generate empty flowunit and run operate enough times before evaluating RCA
-    heap_Used.setGernericFlowUnitList();
-    gc_Collection_Time.setGernericFlowUnitList();
+    heap_Used.setEmptyFlowUnitList();
+    gc_Collection_Time.setEmptyFlowUnitList();
     for (int i = 0; i < RCA_PERIOD-1; i++) {
       youngGenRca.operate();
     }
@@ -47,7 +47,7 @@ public class HighHeapYoungGenRcaTest {
   public void initTestHighHeapYoungGenRca() {
     heap_Used = new MetricTestHelper(5);
     gc_Collection_Time = new MetricTestHelper(5);
-    youngGenRca = new HighHeapYoungGenRca(5, heap_Used, gc_Collection_Time);
+    youngGenRca = new HighHeapUsageYoungGenRca(5, heap_Used, gc_Collection_Time);
     columnName = Arrays.asList("MemType", "max");
     PowerMockito.mockStatic(System.class);
   }

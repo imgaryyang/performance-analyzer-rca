@@ -24,8 +24,12 @@ import com.amazon.opendistro.elasticsearch.performanceanalyzer.rca.framework.api
 import com.amazon.opendistro.elasticsearch.performanceanalyzer.rca.framework.api.Rca;
 import com.amazon.opendistro.elasticsearch.performanceanalyzer.rca.framework.api.aggregators.SlidingWindow;
 import com.amazon.opendistro.elasticsearch.performanceanalyzer.rca.framework.api.contexts.ResourceContext;
+import com.amazon.opendistro.elasticsearch.performanceanalyzer.rca.framework.api.contexts.ResourceContext.Resource;
 import com.amazon.opendistro.elasticsearch.performanceanalyzer.rca.framework.api.flow_units.MetricFlowUnit;
 import com.amazon.opendistro.elasticsearch.performanceanalyzer.rca.framework.api.flow_units.ResourceFlowUnit;
+import com.amazon.opendistro.elasticsearch.performanceanalyzer.rca.persistence.FlowUnitWrapper;
+import com.amazon.opendistro.elasticsearch.performanceanalyzer.rca.scheduler.FlowUnitOperationArgWrapper;
+import com.amazon.opendistro.elasticsearch.performanceanalyzer.rca.store.flowunit.HighHeapUsageFlowUnit;
 import com.amazon.opendistro.elasticsearch.performanceanalyzer.reader.ClusterDetailsEventProcessor;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,9 +46,9 @@ import org.apache.logging.log4j.Logger;
  * gen during the last time interval and then use it to calculate its moving average. If both the
  * promotion rate and young gen GC time reach the threshold, this node is marked as unhealthy.
  */
-public class HighHeapYoungGenRca extends Rca {
+public class HighHeapUsageYoungGenRca extends Rca<ResourceFlowUnit> {
 
-  private static final Logger LOG = LogManager.getLogger(HighHeapYoungGenRca.class);
+  private static final Logger LOG = LogManager.getLogger(HighHeapUsageYoungGenRca.class);
   private static final int RCA_PERIOD = 12;
   private static final int PROMOTION_RATE_SLIDING_WINDOW_IN_MINS = 10;
   //promotion rate threshold is 500 Mb/s
@@ -59,7 +63,7 @@ public class HighHeapYoungGenRca extends Rca {
   private final SlidingWindow gcTimeDeque;
   private final SlidingWindow promotionRateDeque;
 
-  public <M extends Metric> HighHeapYoungGenRca(long evaluationIntervalSeconds, final M heap_Used,
+  public <M extends Metric> HighHeapUsageYoungGenRca(long evaluationIntervalSeconds, final M heap_Used,
       final M gc_Collection_Time) {
     super(evaluationIntervalSeconds);
     counter = 0;
@@ -110,8 +114,8 @@ public class HighHeapYoungGenRca extends Rca {
 
   @Override
   public ResourceFlowUnit operate() {
-    List<MetricFlowUnit> heapUsedMetrics = heap_Used.fetchFlowUnitList();
-    List<MetricFlowUnit> gcCollectionTimeMetrics = gc_Collection_Time.fetchFlowUnitList();
+    List<MetricFlowUnit> heapUsedMetrics = heap_Used.getFlowUnits();
+    List<MetricFlowUnit> gcCollectionTimeMetrics = gc_Collection_Time.getFlowUnits();
 
     double totYoungGCTime = Double.NaN;
     double oldGenHeapUsed = Double.NaN;
@@ -166,5 +170,23 @@ public class HighHeapYoungGenRca extends Rca {
       LOG.debug("RCA: Empty FlowUnit returned for Young Gen RCA");
       return new ResourceFlowUnit(System.currentTimeMillis(), ResourceContext.generic());
     }
+  }
+
+  /**
+   * TODO: Move this method out of the RCA class. The scheduler should set the flow units it drains
+   * from the Rx queue between the scheduler and the networking thread into the node.
+   *
+   * @param args The wrapper around the flow unit operation.
+   */
+  public void generateFlowUnitListFromWire(FlowUnitOperationArgWrapper args) {
+    final List<FlowUnitWrapper> flowUnitWrappers =
+        args.getWireHopper().readFromWire(args.getNode());
+    List<ResourceFlowUnit> flowUnitList = new ArrayList<>();
+    LOG.debug("rca: Executing fromWire: {}", this.getClass().getSimpleName());
+    for (FlowUnitWrapper messageWrapper : flowUnitWrappers) {
+      flowUnitList.add(ResourceFlowUnit.buildFlowUnitFromWrapper(messageWrapper));
+    }
+
+    setFlowUnits(flowUnitList);
   }
 }

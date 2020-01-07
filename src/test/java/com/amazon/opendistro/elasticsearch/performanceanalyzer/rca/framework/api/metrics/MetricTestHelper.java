@@ -15,6 +15,6 @@ public class MetricTestHelper extends Metric {
   }
 
   public void createTestFlowUnits(final List<String> columnName, final List<String> row) {
-    this.flowUnitList = Collections.singletonList(new MetricFlowUnit(0, Arrays.asList(columnName, row)));
+    this.flowUnits = Collections.singletonList(new MetricFlowUnit(0, Arrays.asList(columnName, row)));
   }
 }
