@@ -1,5 +1,5 @@
 /*
- * Copyright <2019> Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License").
  * You may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ plugins {
     id 'application'
     id 'maven-publish'
     id 'com.google.protobuf' version '0.8.8'
+    id 'jacoco'
 }
 
 application {
@@ -37,13 +38,28 @@ application {
 // Include pa_config folder in the distribution.
 applicationDistribution.from(".") {
     include 'pa_config/*'
+    include 'pa_bin/*'
+}
+
+distributions {
+    main {
+        contents {
+            eachFile {
+                it.path = it.path.replace("-$version/", '/')
+            }
+        }
+    }
+}
+
+distZip {
+    archiveName 'performance-analyzer-rca.zip'
 }
 
 publishing {
     publications {
         maven(MavenPublication) {
             groupId = 'com.amazon.opendistro.elasticsearch'
-            artifactId = 'performanceanalyzer'
+            artifactId = 'performanceanalyzer-rca'
             version = '1.3'
             from components.java
         }
@@ -68,6 +84,40 @@ tasks.withType(Checkstyle) {
     }
 }
 
+jacoco {
+    toolVersion = "0.8.5"
+}
+
+jacocoTestReport {
+    reports {
+        xml.enabled false
+        html.enabled true
+        csv.enabled false
+    }
+
+    afterEvaluate {
+        classDirectories.from = files(classDirectories.files.collect {
+            fileTree(dir: it,
+                    exclude: [
+                            '**/com/amazon/opendistro/elasticsearch/performanceanalyzer/grpc/**'])
+        })
+    }
+}
+
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                minimum = 0.3
+            }
+        }
+    }
+}
+
+// to run coverage verification during the build (and fail when appropriate)
+check.dependsOn jacocoTestCoverageVerification
+
+
 version = "${opendistroVersion}.0"
 if (isSnapshot) {
     version += "-SNAPSHOT"
@@ -75,6 +125,16 @@ if (isSnapshot) {
 
 test {
     enabled = true
+
+}
+
+task rcaTest(type: Test) {
+    dependsOn checkstyleMain
+    dependsOn checkstyleTest
+    useJUnit {
+        includeCategories 'com.amazon.opendistro.elasticsearch.performanceanalyzer.rca.GradleTaskForRca'
+    }
+    testLogging.showStandardStreams = true
 }
 
 sourceCompatibility = 1.8

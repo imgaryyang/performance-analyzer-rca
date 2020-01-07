@@ -1,5 +1,5 @@
 /*
- * Copyright <2019> Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License").
  * You may not use this file except in compliance with the License.
@@ -44,7 +44,6 @@ import org.junit.experimental.categories.Category;
 
 @Category(GradleTaskForRca.class)
 @SuppressWarnings("serial")
-@Ignore
 public class RCASchedulerTests {
   private static final Logger LOG = LogManager.getLogger(Tasklet.class);
   Queryable queryable;

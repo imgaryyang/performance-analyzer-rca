@@ -1,5 +1,5 @@
 /*
- * Copyright <2019> Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License").
  * You may not use this file except in compliance with the License.
@@ -21,13 +21,10 @@ import com.amazon.opendistro.elasticsearch.performanceanalyzer.rca.framework.cor
 import com.amazon.opendistro.elasticsearch.performanceanalyzer.rca.framework.core.Node;
 import com.amazon.opendistro.elasticsearch.performanceanalyzer.rca.framework.core.RcaConf;
 import com.amazon.opendistro.elasticsearch.performanceanalyzer.rca.framework.core.Stats;
-import com.amazon.opendistro.elasticsearch.performanceanalyzer.reader.ClusterLevelMetricsReader;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -67,7 +64,7 @@ public class RcaUtil {
     return Stats.getInstance().getConnectedComponents();
   }
 
-  public static boolean doTagsMatch(Node node, RcaConf conf) {
+  public static boolean doTagsMatch(Node<?> node, RcaConf conf) {
     Map<String, String> rcaTagMap = conf.getTagMap();
     for (Map.Entry<String, String> tag : node.getTags().entrySet()) {
       String rcaConfTagvalue = rcaTagMap.get(tag.getKey());
@@ -75,26 +72,5 @@ public class RcaUtil {
           && Arrays.asList(tag.getValue().split(",")).contains(rcaConfTagvalue);
     }
     return true;
-  }
-
-  public static List<String> fetchCurrentDataNodeIdList() {
-    ClusterLevelMetricsReader.NodeDetails[] allNodes = ClusterLevelMetricsReader.getNodes();
-    if (allNodes.length > 0) {
-      return Arrays.stream(allNodes)
-          .filter(p -> p.getRole().equals(AllMetrics.NodeRole.DATA.toString()))
-          .map(p -> p.getId())
-          .collect(Collectors.toList());
-    } else {
-      return Collections.singletonList("local");
-    }
-  }
-
-  public static String fetchCurrentNodeId() {
-    ClusterLevelMetricsReader.NodeDetails[] allNodes = ClusterLevelMetricsReader.getNodes();
-    if (allNodes.length > 0) {
-      return allNodes[0].getId();
-    } else {
-      return "local";
-    }
   }
 }

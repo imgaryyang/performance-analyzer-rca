@@ -1,5 +1,5 @@
 /*
- * Copyright <2019> Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License").
  * You may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ public class Util {
   public static final String READER_LOCATION =
       System.getProperty("es.path.home")
           + File.separator
-          + "performance-analyzer-rca-1.3.0-SNAPSHOT"
+          + "performance-analyzer-rca"
           + File.separator;
   public static final String DATA_DIR =
       System.getProperty("es.path.home")
