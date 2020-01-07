@@ -1,5 +1,5 @@
 /*
- * Copyright <2019> Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License").
  * You may not use this file except in compliance with the License.
@@ -35,14 +35,23 @@ public class SlidingWindow {
     this.sum = 0.0;
   }
 
+  /**
+   * callback function when adding a data to the sliding window
+   */
   protected void add(double value) {
     sum += value;
   }
 
+  /**
+   * callback function when removing a data from the sliding window
+   */
   protected void remove(double value) {
     sum -= value;
   }
 
+  /**
+   * insert data into the sliding window
+   */
   public void next(long timeStamp, double value) {
     while (!windowDeque.isEmpty()
         && TimeUnit.MILLISECONDS.toSeconds(timeStamp - windowDeque.peekLast().getTimeStamp())
@@ -54,6 +63,9 @@ public class SlidingWindow {
     windowDeque.addFirst(new SlidingWindowData(timeStamp, value));
   }
 
+  /**
+   * read the sliding window average
+   */
   public double read() {
     if (!windowDeque.isEmpty()) {
       long timeStampDiff =
@@ -65,24 +77,5 @@ public class SlidingWindow {
       }
     }
     return Double.NaN;
-  }
-
-  public static class SlidingWindowData {
-
-    protected long timeStamp;
-    protected double value;
-
-    SlidingWindowData(long timeStamp, double value) {
-      this.timeStamp = timeStamp;
-      this.value = value;
-    }
-
-    public long getTimeStamp() {
-      return this.timeStamp;
-    }
-
-    public double getValue() {
-      return this.value;
-    }
   }
 }
